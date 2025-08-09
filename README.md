@@ -103,13 +103,13 @@ This project is a GraphQL API designed for managing professionals, employers, jo
 
 📦 Dependencies Installed.
 
-npm init --yes
-npm pkg set type="module"
-npm i @apollo/server@^4 graphql@^16 mongoose express cors body-parser
-npm install mongoose nodemon
-pip install faker
-pip install pymongo
-npm i --save-dev nodemon
+- npm init --yes
+- npm pkg set type="module"
+- npm i @apollo/server@^4 graphql@^16 mongoose express cors body-parser
+- npm install mongoose nodemon
+- pip install faker
+- pip install pymongo
+- npm i --save-dev nodemon
 
 ---
 
