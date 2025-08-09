@@ -113,11 +113,11 @@ npm i --save-dev nodemon
 
 ---
 
-# ▶️ ¿How to Run?
+### ▶️ ¿How to Run?
 
-## 🟢 Start the GraphQL Server.
+### 🟢 Start the GraphQL Server.
 
-## 🖼️ Massive Data and Image Upload Process.
+### 🖼️ Massive Data and Image Upload Process.
 
 ### 1. Generate JSON Data from Python Scripts.
 
