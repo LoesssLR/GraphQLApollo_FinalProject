@@ -1,0 +1,192 @@
+# ========================
+# REPORTS                =
+# ========================
+
+# ========================
+# 1. Add a Professional
+# ========================
+mutation {
+  agregarProfesional(
+    cedula: "604840754",
+    nombre: "Luis López",
+    genero: "Masculino",
+    profesiones: ["Informática", "Modelo"]
+  ) {
+    cedula
+    nombre
+    profesiones
+  }
+}
+
+# ========================
+# 2. Add an Employer
+# ========================
+mutation {
+  agregarEmpleador(
+    cedula: 302570430,
+    nombre: "Soluciones Ticas",
+    tipo: "JURIDICA"
+  ) {
+    cedula
+    nombre
+    tipo
+  }
+}
+
+# ========================
+# 3. Add a Vacancy (you must replace empresaId with a valid one)
+# ========================
+mutation {
+  agregarVacante(
+    titulo: "DevOps Engineer",
+    area: "Informática",
+    descripcion: "Con experiencia en Docker y CI/CD",
+    empresaCedula: "302570430"
+  ) {
+    titulo
+    empresa {
+      nombre
+    }
+  }
+}
+
+# ========================
+# 4. Add an Expediente (replace profesionalId)
+# ========================
+
+mutation {
+  agregarExpediente(
+    profesionalCedula: "604840754",
+    titulos: [
+      {
+        nombre: "Eren",
+        imagenBase64: "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD..."
+      }
+    ],
+    experiencias: [
+      {
+        empresa: "ExtremeTech",
+        descripcion: "Mantenimiento de equipos",
+        anios: 2
+      }
+    ]
+  ) {
+    profesional {
+      cedula
+      nombre
+    }
+    titulos {
+      nombre
+      imagenBase64
+    }
+    experiencias {
+      empresa
+      descripcion
+      anios
+    }
+  }
+}
+
+query {
+  profesional(cedula: "604840754") {
+    nombre
+    expediente {
+      titulos {
+        _id
+        nombre
+        imagenUrl
+      }
+    }
+  }
+}
+
+# ========================
+# 5. Postular a Vacante (replace IDs) X3
+# ========================
+mutation {
+  postularVacante(
+    profesionalId: "REEMPLAZAR_PROFESIONAL_ID",
+    vacanteId: "REEMPLAZAR_VACANTE_ID"
+  ) {
+    cedula
+    nombre
+    postulaciones {
+      vacanteId
+      fecha
+    }
+  }
+}
+
+# ========================
+# 6. List All Professionals
+# ========================
+query {
+  profesionales {
+    cedula
+    nombre
+    genero
+    profesiones
+  }
+}
+
+# ========================
+# 7. List All Employers
+# ========================
+query {
+  empleadores {
+    cedula
+    nombre
+    tipo
+    puestosOfertados {
+      titulo
+      area
+    }
+  }
+}
+
+# ========================
+# 8. List All Vacancies
+# ========================
+query {
+  vacantes {
+    titulo
+    area
+    descripcion
+    empresa {
+      nombre
+    }
+  }
+}
+
+# ========================
+# 9. Get Professionals by Area
+# ========================
+query {
+  profesionalesPorArea(area: "Electricista") {
+    cedula
+    nombre
+    profesiones
+  }
+}
+
+# ========================
+# 10. Gender Distribution
+# ========================
+query {
+  conteoPorGenero {
+    genero
+    total
+  }
+}
+
+# ========================
+# 11. Area Count & Percentage
+# ========================
+query {
+  conteoPorArea {
+    area
+    total
+    porcentaje
+  }
+}
+
