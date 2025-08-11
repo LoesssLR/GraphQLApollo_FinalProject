@@ -9,6 +9,7 @@ const Titulo = mongoose.model("Titulo");
 
 // URL base para servir imágenes
 const BASE_IMG = process.env.IMAGES_BASE_URL ?? "http://localhost:4001";
+const vacantesCollection = Vacante.collection.name; // evita hardcodear "Vacantes" o "vacantes"
 
 export const resolvers = {
   Query: {
@@ -24,10 +25,63 @@ export const resolvers = {
     vacantes: async () => await Vacante.find().populate("empresa"),
     vacantePorArea: async (_, { area }) => await Vacante.find({ area }).populate("empresa"),
 
-    // Reportes
     profesionalesPorArea: async (_, { area }) => {
-      return await Profesional.find({ profesiones: area });
+      const rows = await Profesional.aggregate([
+        { $match: { profesiones: area } },
+        {
+          $project: {
+            cedula: 1,
+            nombre: 1,
+            profesiones: {
+              $filter: {
+                input: "$profesiones",
+                as: "p",
+                cond: { $eq: ["$$p", area] }
+              }
+            }
+          }
+        }
+      ]);
+
+      // Si no hay resultados, devuelve []
+      return rows; 
     },
+
+    postulantesPorArea: async (_,{ area }) => {
+      return await Profesional.aggregate([
+        { $unwind: "$postulaciones" },
+        {
+          $lookup: {
+            from: vacantesCollection,
+            localField: "postulaciones.vacanteId",
+            foreignField: "_id",
+            as: "vac"
+          }
+        },
+        { $unwind: "$vac" },
+        { $match: { "vac.area": area } },
+        {
+          $lookup: {
+            from: Empleador.collection.name,  // nombre real de la colección de empleadores
+            localField: "vac.empresa",
+            foreignField: "_id",
+            as: "empresa"
+          }
+        },
+        { $unwind: "$empresa" },
+        {
+          $group: {
+            _id: "$_id",
+            cedula: { $first: "$cedula" },
+            nombre: { $first: "$nombre" },
+            empresas: { $addToSet: "$empresa.nombre" } // si un postulante aplica a varias empresas
+          }
+        },
+        { $project: { _id: 0, cedula: 1, nombre: 1, empresas: 1 } },
+        { $sort: { nombre: 1 } }
+      ]).collation({ locale: "es", strength: 1 });
+    },
+
     conteoPorGenero: async () => {
       const result = await Profesional.aggregate([
         { $group: { _id: "$genero", total: { $sum: 1 } } },
@@ -35,26 +89,33 @@ export const resolvers = {
       ]);
       return result;
     },
+
     conteoPorArea: async () => {
-      const total = await Profesional.countDocuments();
-      const result = await Profesional.aggregate([
+      const totalProfesionales = await Profesional.countDocuments();
+
+      const rows = await Profesional.aggregate([
         { $unwind: "$profesiones" },
-        { $group: { _id: "$profesiones", total: { $sum: 1 } } },
+        {
+          $group: {
+            _id: "$profesiones",
+            personas: { $addToSet: "$_id" } // evita duplicados del mismo profesional
+          }
+        },
         {
           $project: {
+            _id: 0,
             area: "$_id",
-            total: 1,
-            porcentaje: {
-              $multiply: [
-                { $divide: ["$total", total] },
-                100
-              ]
-            },
-            _id: 0
+            total: { $size: "$personas" }
           }
-        }
+        },
+        { $sort: { total: -1, area: 1 } }
       ]);
-      return result;
+
+      // porcentaje respecto al total de profesionales
+      return rows.map(r => ({
+        ...r,
+        porcentaje: totalProfesionales ? (r.total / totalProfesionales) * 100 : 0
+      }));
     }
   },
 
@@ -88,8 +149,12 @@ export const resolvers = {
 
     // Crear Expediente
     agregarExpediente: async (_, { profesionalCedula, titulos, experiencias }) => {
+
       const profesional = await Profesional.findOne({ cedula: profesionalCedula });
       if (!profesional) throw new Error("Profesional no encontrado con esa cédula.");
+
+      const existente = await Expediente.findOne({ profesional: profesional._id });
+      if (existente) throw new Error("El profesional ya tiene un expediente.");
 
       // 1. Crear el expediente con experiencias
       const nuevo = new Expediente({
@@ -111,7 +176,7 @@ export const resolvers = {
       return await Expediente.findById(nuevo._id);
     },
 
-    // Postulación con validación de máximo 3 por mes
+    // Postulación con validación de máximo 3 por mes y sin duplicados por vacante
     postularVacante: async (_, { profesionalId, vacanteId }) => {
       const hoy = new Date();
       const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
@@ -120,11 +185,18 @@ export const resolvers = {
       const profesional = await Profesional.findById(profesionalId);
       if (!profesional) throw new Error("Profesional no encontrado.");
 
+      // ❌ No permitir postular dos veces a la misma vacante (en cualquier fecha)
+      const yaPostuloMismaVacante = profesional.postulaciones
+        .some(p => String(p.vacanteId) === String(vacanteId));
+      if (yaPostuloMismaVacante) {
+        throw new Error("Ya estás postulado a esta vacante.");
+      }
+
+      // ⛔ Límite: máximo 3 postulaciones por mes (a vacantes distintas)
       const postulacionesMes = profesional.postulaciones.filter(p => {
         const fecha = new Date(p.fecha);
         return fecha >= inicioMes && fecha <= finMes;
       });
-
       if (postulacionesMes.length >= 3) {
         throw new Error("Solo se permiten 3 postulaciones por mes.");
       }
@@ -162,6 +234,18 @@ export const resolvers = {
   Profesional: {
     expediente: async (parent) => {
       return await Expediente.findOne({ profesional: parent._id });
+    },
+    postulaciones: async (parent) => {
+      // Popular cada vacante
+      return await Promise.all(
+        parent.postulaciones.map(async (p) => {
+          const vacante = await Vacante.findById(p.vacanteId).populate("empresa");
+          return {
+            fecha: p.fecha,
+            vacante
+          };
+        })
+      );
     }
   },
 

@@ -5,12 +5,13 @@
 # ========================
 # 1. Add a Professional
 # ========================
+
 mutation {
   agregarProfesional(
     cedula: "604840754",
     nombre: "Luis López",
     genero: "Masculino",
-    profesiones: ["Informática", "Modelo"]
+    profesiones: ["Informática", "Electricista"]
   ) {
     cedula
     nombre
@@ -19,12 +20,13 @@ mutation {
 }
 
 # ========================
-# 2. Add an Employer
+# 2. Add an Employer (Company with a lot of vacancies)
 # ========================
+
 mutation {
   agregarEmpleador(
-    cedula: 302570430,
-    nombre: "Soluciones Ticas",
+    cedula: "302570430",
+    nombre: "PuertoTech",
     tipo: "JURIDICA"
   ) {
     cedula
@@ -36,17 +38,43 @@ mutation {
 # ========================
 # 3. Add a Vacancy (you must replace empresaId with a valid one)
 # ========================
+
+# V1
 mutation {
   agregarVacante(
-    titulo: "DevOps Engineer",
+    titulo: "Analista de Datos",
     area: "Informática",
-    descripcion: "Con experiencia en Docker y CI/CD",
+    descripcion: "Responsable de análisis y visualización de datos para apoyar la toma de decisiones",
     empresaCedula: "302570430"
   ) {
+    _id
     titulo
-    empresa {
-      nombre
-    }
+  }
+}
+
+# V2
+mutation {
+  agregarVacante(
+    titulo: "Desarrollador Backend",
+    area: "Informática",
+    descripcion: "Desarrollo y mantenimiento de APIs y servicios para aplicaciones empresariales",
+    empresaCedula: "302570430"
+  ) {
+    _id
+    titulo
+  }
+}
+
+# V3
+mutation {
+  agregarVacante(
+    titulo: "Especialista en Ciberseguridad",
+    area: "Informática",
+    descripcion: "Implementación de medidas de seguridad y monitoreo de vulnerabilidades",
+    empresaCedula: "302570430"
+  ) {
+    _id
+    titulo
   }
 }
 
@@ -54,38 +82,7 @@ mutation {
 # 4. Add an Expediente (replace profesionalId)
 # ========================
 
-mutation {
-  agregarExpediente(
-    profesionalCedula: "604840754",
-    titulos: [
-      {
-        nombre: "Eren",
-        imagenBase64: "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD..."
-      }
-    ],
-    experiencias: [
-      {
-        empresa: "ExtremeTech",
-        descripcion: "Mantenimiento de equipos",
-        anios: 2
-      }
-    ]
-  ) {
-    profesional {
-      cedula
-      nombre
-    }
-    titulos {
-      nombre
-      imagenBase64
-    }
-    experiencias {
-      empresa
-      descripcion
-      anios
-    }
-  }
-}
+python .\scripts\Img_Base64\encode_titulo.py
 
 query {
   profesional(cedula: "604840754") {
@@ -103,16 +100,116 @@ query {
 # ========================
 # 5. Postular a Vacante (replace IDs) X3
 # ========================
-mutation {
-  postularVacante(
-    profesionalId: "REEMPLAZAR_PROFESIONAL_ID",
-    vacanteId: "REEMPLAZAR_VACANTE_ID"
-  ) {
+
+# Obtener IDs (profesional y vacantes)
+
+query GetIds {
+  prof: profesional(cedula: "604840754") { _id nombre }
+  vacs: vacantes { _id titulo }
+}
+
+# Postularse a 3 vacantes distintas.
+
+Variables:
+
+{
+  "prof": "604840754",
+  "v1":  "68998d14bc9d0f7424b90231",
+  "v2":  "68998d16bc9d0f7424b90234",
+  "v3":  "68998d17bc9d0f7424b90237"
+}
+
+Mutaciones: 
+
+mutation Postular3Veces($prof: ID!, $v1: ID!, $v2: ID!, $v3: ID!) {
+  post1: postularVacante(profesionalId: $prof, vacanteId: $v1) {
     cedula
     nombre
     postulaciones {
-      vacanteId
       fecha
+      vacante {
+        _id
+        titulo
+        area
+        empresa { cedula nombre }
+      }
+    }
+  }
+  post2: postularVacante(profesionalId: $prof, vacanteId: $v2) {
+    cedula
+    nombre
+    postulaciones {
+      fecha
+      vacante {
+        _id
+        titulo
+        area
+        empresa { cedula nombre }
+      }
+    }
+  }
+  post3: postularVacante(profesionalId: $prof, vacanteId: $v3) {
+    cedula
+    nombre
+    postulaciones {
+      fecha
+      vacante {
+        _id
+        titulo
+        area
+        empresa { cedula nombre }
+      }
+    }
+  }
+}
+
+# V4
+mutation {
+  agregarVacante(
+    titulo: "Administrador de Base de Datos",
+    area: "Informática",
+    descripcion: "Gestión, optimización y respaldo de bases de datos para garantizar disponibilidad y seguridad de la información",
+    empresaCedula: "302570430"
+  ) {
+    _id
+    titulo
+  }
+}
+
+query GetIds {
+  prof: profesional(cedula: "604840754") { _id nombre }
+  vacs: vacantes { _id titulo }
+}
+
+{
+  "prof": "68999253813bb7b8973a7662",
+  "v4":  "689992ec813bb7b8973a76a1"
+}
+
+mutation Postular4ta($prof: ID!, $v4: ID!) {
+  post4: postularVacante(profesionalId: $prof, vacanteId: $v4) {
+    cedula nombre
+  }
+}
+
+# Debe mostrar error.
+
+# Verificar postulaciones del profesional.
+
+query VerPostulaciones {
+  profesional(cedula: "604840754") {
+    nombre
+    postulaciones {
+      fecha
+      vacante {
+        _id
+        titulo
+        area
+        empresa {
+          cedula
+          nombre
+        }
+      }
     }
   }
 }
@@ -120,6 +217,7 @@ mutation {
 # ========================
 # 6. List All Professionals
 # ========================
+
 query {
   profesionales {
     cedula
@@ -132,6 +230,7 @@ query {
 # ========================
 # 7. List All Employers
 # ========================
+
 query {
   empleadores {
     cedula
@@ -147,6 +246,7 @@ query {
 # ========================
 # 8. List All Vacancies
 # ========================
+
 query {
   vacantes {
     titulo
@@ -161,27 +261,18 @@ query {
 # ========================
 # 9. Get Professionals by Area
 # ========================
+
 query {
-  profesionalesPorArea(area: "Electricista") {
-    cedula
+  postulantesPorArea(area: "Informática") {
     nombre
-    profesiones
+    empresas
   }
 }
 
 # ========================
-# 10. Gender Distribution
+# 10. Area Count & Percentage
 # ========================
-query {
-  conteoPorGenero {
-    genero
-    total
-  }
-}
 
-# ========================
-# 11. Area Count & Percentage
-# ========================
 query {
   conteoPorArea {
     area
@@ -189,4 +280,17 @@ query {
     porcentaje
   }
 }
+
+# ========================
+# 11. Gender Distribution
+# ========================
+
+query {
+  conteoPorGenero {
+    genero
+    total
+  }
+}
+
+
 

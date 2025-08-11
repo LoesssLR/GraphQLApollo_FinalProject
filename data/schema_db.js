@@ -9,10 +9,11 @@ type Profesional {
   profesiones: [String!]!
   postulaciones: [Postulacion]!
   expediente: Expediente
+  empresas: [String!] 
 }
 
 type Postulacion {
-  vacanteId: ID!
+  vacante: Vacante!
   fecha: String!
 }
 
@@ -31,6 +32,7 @@ type Vacante {
   descripcion: String!
   empresa: Empleador!
   fechaPublicacion: String!
+  vacante: Vacante
 }
 
 type Expediente {
@@ -68,10 +70,12 @@ type Query {
 
   # Reportes
   profesionalesPorArea(area: String!): [Profesional]!
+  postulantesPorArea(area: String!): [Profesional]!
   conteoPorGenero: [GeneroConteo]!
   conteoPorArea: [AreaConteo]!
 
   tituloPorId(id: ID!): Titulo
+
 }
 
 type GeneroConteo {

@@ -37,6 +37,7 @@ await Profesional.deleteMany({});
 await Empleador.deleteMany({});
 await Vacante.deleteMany({});
 await Expediente.deleteMany({});
+await Titulo.deleteMany({}); // 👈 te faltaba
 console.log("Cleared all collections");
 
 // 1. Insertar Profesionales
@@ -58,16 +59,28 @@ const vacantesConEmpresa = vacantesData.map(v => ({
 const vacantesInsertadas = await Vacante.insertMany(vacantesConEmpresa);
 console.log(`Inserted ${vacantesInsertadas.length} vacantes`);
 
-// 4. Insertar Expedientes y asignar profesional aleatorio
+// 4. Insertar Expedientes y asignar profesional 1–a–1 (truncando extras)
 const expedientesData = await readJSON("expedientes.json");
-const expedientesConProfesional = expedientesData.map(e => ({
-  ...e,
-  profesional: profesionalesInsertados[Math.floor(Math.random() * profesionalesInsertados.length)]._id
-}));
-const expedientesInsertados = await Expediente.insertMany(expedientesConProfesional);
-console.log(`Inserted ${expedientesInsertados.length} expedientes`);
 
-// 5. Insertar Títulos y asignar profesional aleatorio
+// Tomar como máximo tantos expedientes como profesionales haya (1 expediente por profesional)
+const maxExpedientes = Math.min(expedientesData.length, profesionalesInsertados.length);
+
+// barajar profesionales para no sesgar siempre a los primeros
+const profsShuffled = [...profesionalesInsertados].sort(() => Math.random() - 0.5);
+
+// asignación 1–a–1
+const expedientesConProfesional = [];
+for (let i = 0; i < maxExpedientes; i++) {
+  expedientesConProfesional.push({
+    ...expedientesData[i],
+    profesional: profsShuffled[i]._id
+  });
+}
+
+const expedientesInsertados = await Expediente.insertMany(expedientesConProfesional);
+console.log(`Inserted ${expedientesInsertados.length} expedientes (1 por profesional)`);
+
+// 5. Insertar Títulos y asignar expediente aleatorio de los insertados
 const titulosData = await readJSON("titulos.json");
 const titulosConExpediente = titulosData.map(t => ({
   ...t,
@@ -75,7 +88,6 @@ const titulosConExpediente = titulosData.map(t => ({
 }));
 const titulosInsertados = await Titulo.insertMany(titulosConExpediente);
 console.log(`Inserted ${titulosInsertados.length} títulos`);
-
 
 await mongoose.disconnect();
 console.log("Disconnected from MongoDB");

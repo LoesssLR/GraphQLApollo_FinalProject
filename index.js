@@ -1,4 +1,3 @@
-// index.js (TU CÓDIGO EXISTENTE)
 import { ApolloServer } from '@apollo/server';
 import { startStandaloneServer } from '@apollo/server/standalone';
 import mongoose from "mongoose";
@@ -24,11 +23,12 @@ const { url } = await startStandaloneServer(server, { listen: { port: 4000 } });
 console.log(`GraphQL ready at ${url}`);
 
 // ============================
-//  EXTRA: Mini servidor Express
+//  Mini servidor Express
 // ============================
+
 import express from "express";
 import mongoosePkg from "mongoose";
-const Titulo = mongoosePkg.model("Titulo"); // ya registrado arriba
+const Titulo = mongoosePkg.model("Titulo");
 
 const app = express();
 

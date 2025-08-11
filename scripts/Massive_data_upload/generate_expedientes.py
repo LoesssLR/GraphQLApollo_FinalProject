@@ -2,27 +2,20 @@ import json
 from faker import Faker
 import random
 import os
-import base64
 
 fake = Faker('es_MX')
 
 expedientes = []
 
-for i in range(1000):
+for _ in range(1000):
     expediente = {
-        "profesional": None,  # Asignarás luego con IDs reales
-        "titulos": [
-            {
-                "nombre": fake.job(),
-                "imagenBase64": base64.b64encode(fake.text(50).encode()).decode()
-            }
-            for _ in range(random.randint(1, 3))
-        ],
+        # Se asignará luego en el loader con el ObjectId real del Profesional
+        "profesional": None,
         "experiencias": [
             {
                 "empresa": fake.company(),
                 "descripcion": fake.sentence(nb_words=8),
-                "años": random.randint(1, 10)
+                "anios": random.randint(1, 10)  # 👈 campo correcto
             }
             for _ in range(random.randint(1, 4))
         ]
@@ -36,4 +29,4 @@ os.makedirs(folder_path, exist_ok=True)
 with open(output_path, "w", encoding="utf-8") as f:
     json.dump(expedientes, f, ensure_ascii=False, indent=2)
 
-print(f"Archivo generado correctamente en: {output_path}")
+print(f"✅ Archivo generado: {output_path}")
