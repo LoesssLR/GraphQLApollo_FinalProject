@@ -158,10 +158,6 @@ export const resolvers = {
     // Crear Expediente
     agregarExpediente: async (_, { profesionalCedula, titulos, experiencias }) => {
 
-      if (titulos.some(t => t.imagenBase64 && t.imagenBase64.length > 0)) {
-        throw new Error("La imagen debe subirse por POST /api/titulos/:id/imagen-base64");
-      }
-
       const profesional = await Profesional.findOne({ cedula: profesionalCedula });
       if (!profesional) throw new Error("Profesional no encontrado con esa cédula.");
 
@@ -179,8 +175,7 @@ export const resolvers = {
       await Promise.all(titulos.map(async (titulo) => {
         await new Titulo({
           nombre: titulo.nombre,
-          imagenBase64: titulo.imagenBase64,
-          expediente: nuevo._id // 👈 clave: mantenerlo como ObjectId
+          expediente: nuevo._id
         }).save();
       }));
 
@@ -261,11 +256,7 @@ export const resolvers = {
   },
 
   Titulo: {
-    imagenUrl: (parent) => {
-      // 1) Si ya hay archivo subido, exponemos su URL directa
-      if (parent.imagenPath) return `${BASE_IMG}${parent.imagenPath}`;
-      // 2) Si no, caemos al endpoint que decodifica base64
-      return `${BASE_IMG}/api/titulos/${parent._id}/imagen`;
-    }
+    imagenUrl: (parent) =>
+      parent.imagenPath ? `${BASE_IMG}${parent.imagenPath}` : null
   }
 };

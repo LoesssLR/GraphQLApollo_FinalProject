@@ -3,22 +3,16 @@ import json
 import random
 from faker import Faker
 
-# === Config ===
 OUTPUT_PATH = os.path.join("..", "DEMO_PROYECTOFINAL", "JSON_MONGO_DATA", "titulos.json")
 CANTIDAD_TITULOS = 1000
 
 fake = Faker("es_MX")
-
-# Base64 de ejemplo (con prefijo data URL para facilitar render)
-FAKE_BASE64 = "data:image/jpeg;base64,U29sbyB1biB0aXR1bG8gZW4gYmFzZTY0Lg=="
 
 def main():
     titulos = []
     for _ in range(CANTIDAD_TITULOS):
         titulos.append({
             "nombre": fake.job(),
-            "imagenBase64": FAKE_BASE64,
-            # Se asignará después en el loader con el ObjectId del expediente real
             "expediente": None
         })
 

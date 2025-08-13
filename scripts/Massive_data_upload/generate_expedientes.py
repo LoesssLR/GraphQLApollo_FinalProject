@@ -9,13 +9,12 @@ expedientes = []
 
 for _ in range(1000):
     expediente = {
-        # Se asignará luego en el loader con el ObjectId real del Profesional
         "profesional": None,
         "experiencias": [
             {
                 "empresa": fake.company(),
                 "descripcion": fake.sentence(nb_words=8),
-                "anios": random.randint(1, 10)  # 👈 campo correcto
+                "anios": random.randint(1, 10)
             }
             for _ in range(random.randint(1, 4))
         ]

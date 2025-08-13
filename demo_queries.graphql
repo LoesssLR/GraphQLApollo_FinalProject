@@ -3,7 +3,7 @@
 # ========================
 
 # ========================
-# 1. Add a Professional
+# 1. Add a Professional  =
 # ========================
 
 mutation {
@@ -12,6 +12,19 @@ mutation {
     nombre: "Luis López",
     genero: "Masculino",
     profesiones: ["Informática", "Electricista"]
+  ) {
+    cedula
+    nombre
+    profesiones
+  }
+}
+
+mutation {
+  agregarProfesional(
+    cedula: "604840753",
+    nombre: "Kevin Córdoba",
+    genero: "Masculino",
+    profesiones: ["Informática", "Otaku"]
   ) {
     cedula
     nombre
@@ -28,6 +41,18 @@ mutation {
     cedula: "302570430",
     nombre: "PuertoTech",
     tipo: "JURIDICA"
+  ) {
+    cedula
+    nombre
+    tipo
+  }
+}
+
+mutation {
+  agregarEmpleador(
+    cedula: "604880547",
+    nombre: "CRTech",
+    tipo: "FISICA"
   ) {
     cedula
     nombre
@@ -82,26 +107,33 @@ mutation {
 # 4. Add an Expediente (replace profesionalId)
 # ========================
 
-python .\scripts\Img_Base64\encode_titulo.py
+mutation {
+  agregarExpediente(
+    profesionalCedula: "604840754",
+    titulos: [{ nombre: "Titulo de inglés." }],
+    experiencias: []
+  ) {
+    titulos { _id nombre imagenUrl }
+  }
+}
+
+# Using the URL that the mutation provide, the title can be inserted from Postman.
+
+  http://localhost:4001/api/titulos/:id/imagen
+
+# Query to GET the title image from Postman.
 
 query {
   profesional(cedula: "604840754") {
-    nombre
-    expediente {
-      titulos {
-        _id
-        nombre
-        imagenUrl
-      }
-    }
+    expediente { titulos { _id nombre imagenUrl } }
   }
 }
 
 # ========================
-# 5. Postular a Vacante (replace IDs) X3
+# 5. Apply a professional to vacancies (replace IDs) X3
 # ========================
 
-# Obtener IDs (profesional y vacantes)
+# Obtain IDs (professional and vacancies)
 
 query GetIds {
   prof: profesional(cedula: "604840754") { _id nombre }
@@ -112,11 +144,16 @@ query GetIds {
 
 Variables:
 
+Prof = profesional ID
+V1 = vacante ID 1
+V2 = vacante ID 2
+V3 = vacante ID 3
+
 {
-  "prof": "604840754",
-  "v1":  "68998d14bc9d0f7424b90231",
-  "v2":  "68998d16bc9d0f7424b90234",
-  "v3":  "68998d17bc9d0f7424b90237"
+  "prof": "-",
+  "v1":  "-",
+  "v2":  "-",
+  "v3":  "-"
 }
 
 Mutaciones: 
@@ -163,6 +200,8 @@ mutation Postular3Veces($prof: ID!, $v1: ID!, $v2: ID!, $v3: ID!) {
   }
 }
 
+# Validation: Check if the professional has applied to the vacancies.
+
 # V4
 mutation {
   agregarVacante(
@@ -182,8 +221,8 @@ query GetIds {
 }
 
 {
-  "prof": "68999253813bb7b8973a7662",
-  "v4":  "689992ec813bb7b8973a76a1"
+  "prof": "-",
+  "v4":  "-"
 }
 
 mutation Postular4ta($prof: ID!, $v4: ID!) {
@@ -192,9 +231,9 @@ mutation Postular4ta($prof: ID!, $v4: ID!) {
   }
 }
 
-# Debe mostrar error.
+# That should show an error.
 
-# Verificar postulaciones del profesional.
+# Verify professional applications.
 
 query VerPostulaciones {
   profesional(cedula: "604840754") {

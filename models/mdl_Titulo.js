@@ -5,8 +5,8 @@ import mongoose from "mongoose";
 
 const tituloSchema = new mongoose.Schema({
   nombre: { type: String, required: true },
-  imagenBase64: { type: String, default: null },   // legado (opcional)
-  imagenPath:   { type: String, default: null },   // ← NUEVO: '/uploads/archivo.ext'
+  // imagenBase64: { type: String, default: null },
+  imagenPath:   { type: String, default: null },   // ← '/uploads/archivo.ext'
   expediente:   { type: mongoose.Schema.Types.ObjectId, ref: "Expediente", required: true }
 }, { collection: "Titulos", timestamps: true });
 

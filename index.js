@@ -1,29 +1,35 @@
+// GraphQL API server using Apollo Server (standalone) and Mongoose.
+
 import { ApolloServer } from '@apollo/server';
 import { startStandaloneServer } from '@apollo/server/standalone';
 import mongoose from "mongoose";
 
-// Conexión a Mongo
+// --- Mongo connection ---
 await mongoose.connect('mongodb://localhost:27017/ProyectoFinal', { dbName: 'ProyectoFinal' });
 console.log('Connected to MongoDB');
 
-// Modelos
+// --- Models ---
 import './models/mdl_Profesional.js';
 import './models/mdl_Empleador.js';
 import './models/mdl_Vacante.js';
 import './models/mdl_Expediente.js';
 import './models/mdl_Titulo.js';
 
-// Schema & resolvers
+// --- Schema & resolvers ---
 import { typeDefs } from './data/schema_db.js';
 import { resolvers } from './data/resolversMongo.js';
 
-// Apollo standalone
+// --- Apollo standalone server ---
+// Create the Apollo Server instance with the provided schema and resolvers.
 const server = new ApolloServer({ typeDefs, resolvers });
+
+// Start the standalone server and listen on port 4000.
+// `startStandaloneServer` returns the server URL, which we log for convenience.
 const { url } = await startStandaloneServer(server, { listen: { port: 4000 } });
 console.log(`GraphQL ready at ${url}`);
 
 // ============================
-//  Mini servidor Express
+//  Mini express server
 // ============================
 
 import express from "express";
@@ -33,7 +39,7 @@ import { randomUUID } from "crypto";
 import multer from "multer";
 import mongoosePkg from "mongoose";
 
-const Titulo = mongoosePkg.model("Titulo");
+const Titulo = mongoosePkg.model("Titulo"); // Uses a pre-registered Mongoose model named "Titulo"
 const app = express();
 
 const UPLOAD_DIR = path.join(process.cwd(), "uploads");
@@ -46,7 +52,7 @@ app.use("/uploads", express.static(UPLOAD_DIR, {
   }
 }));
 
-// Multer: almacenamiento en disco con nombre seguro
+// Multer disk storage: saves incoming files to UPLOAD_DIR with a UUID-based filename while preserving extension.
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
   filename: (_req, file, cb) => {
@@ -54,6 +60,8 @@ const storage = multer.diskStorage({
     cb(null, `${randomUUID()}${ext}`);
   }
 });
+
+// Multer middleware with limits and MIME-type filter (PNG/JPG/JPEG/WEBP only; max 5MB).
 const upload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
@@ -65,55 +73,51 @@ const upload = multer({
   }
 });
 
-// SUBIR imagen como archivo -> guarda solo la ruta
+// Upload an image file and persist ONLY its relative path (not the bytes) in the Titulo document.
+// POST: upload image (stores ONLY the path in MongoDB).
 app.post("/api/titulos/:id/imagen", upload.single("file"), async (req, res) => {
   try {
     const { id } = req.params;
-    if (!mongoosePkg.isValidObjectId(id)) return res.status(400).json({ error: "Invalid ObjectId" });
+    if (!mongoosePkg.isValidObjectId(id))
+      return res.status(400).json({ error: "Invalid ObjectId" });
     if (!req.file) return res.status(400).json({ error: "Archivo requerido" });
 
-    // opcional: borrar archivo anterior si existe
+    // If a previous image exists on disk, delete the old file to prevent orphans
     const prev = await Titulo.findById(id).select("imagenPath");
     if (prev?.imagenPath) {
-      const p = path.join(process.cwd(), prev.imagenPath.replace(/^\//, ""));
-      fs.existsSync(p) && fs.unlink(p, () => {});
+      const absPrev = path.join(process.cwd(), prev.imagenPath.replace(/^\//, ""));
+      if (fs.existsSync(absPrev)) fs.unlink(absPrev, () => {});
     }
 
-    const relPath = `/uploads/${req.file.filename}`; // guardamos la RUTA relativa
-    await Titulo.findByIdAndUpdate(id, { imagenPath: relPath, imagenBase64: null });
+    const relPath = `/uploads/${req.file.filename}`;
+    await Titulo.findByIdAndUpdate(id, {
+      imagenPath: relPath,
+      imagenBase64: null, // Clear legacy Base64 field if present
+    });
 
-    res.json({ ok: true, path: relPath, size: req.file.size, mime: req.file.mimetype });
+    res.json({
+      ok: true,
+      path: relPath,
+      size: req.file.size,
+      mime: req.file.mimetype,
+    });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: "Error guardando imagen" });
   }
 });
 
-app.get("/api/titulos/:id/imagen", async (req, res) => {
-  const { id } = req.params;
-  if (!mongoosePkg.isValidObjectId(id)) {
-    return res.status(400).send("Invalid ObjectId");
+// Multer error handler that returns JSON responses
+app.use((err, _req, res, _next) => {
+  if (err instanceof multer.MulterError) {
+    return res.status(400).json({ error: err.code });
   }
-
-  const doc = await Titulo.findById(id);
-  if (!doc) return res.status(404).send("Not found");
-
-  // Soporta data URL o base64 “crudo”
-  let mime = "image/jpeg";
-  let b64 = doc.imagenBase64 || "";
-  const m = b64.match(/^data:(.+);base64,(.*)$/);
-  if (m) { mime = m[1]; b64 = m[2]; }
-
-  try {
-    const buf = Buffer.from(b64, "base64");
-    res.set("Content-Type", mime);
-    res.set("Cache-Control", "public, max-age=86400");
-    res.send(buf);
-  } catch {
-    res.status(400).send("Invalid base64");
-  }
+  if (err) return res.status(500).json({ error: err.message });
+  return res.end();
 });
 
+// Server startup and helpful endpoint logs ---> npm start
 app.listen(4001, () => {
-  console.log("Images at http://localhost:4001/api/titulos/:id/imagen");
+  console.log("POST imagen en /api/titulos/:id/imagen (form-data: key 'file')");
+  console.log("Uploads en http://localhost:4001/uploads/<filename>");
 });

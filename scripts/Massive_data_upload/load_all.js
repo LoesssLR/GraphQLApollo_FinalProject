@@ -37,7 +37,7 @@ await Profesional.deleteMany({});
 await Empleador.deleteMany({});
 await Vacante.deleteMany({});
 await Expediente.deleteMany({});
-await Titulo.deleteMany({}); // 👈 te faltaba
+await Titulo.deleteMany({});
 console.log("Cleared all collections");
 
 // 1. Insertar Profesionales

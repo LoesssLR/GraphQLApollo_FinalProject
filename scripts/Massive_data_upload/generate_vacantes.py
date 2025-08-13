@@ -9,13 +9,12 @@ areas = ["Informática", "Electricista", "Administración", "Contabilidad", "Tur
 
 vacantes = []
 
-# Supón que vas a insertar luego los IDs reales de empleadores en el load
 for i in range(1000):
     vacante = {
         "titulo": fake.job(),
         "area": random.choice(areas),
         "descripcion": fake.sentence(nb_words=12),
-        "empresa": None,  # Lo asociarás luego en el loader
+        "empresa": None,
         "fechaPublicacion": fake.date_this_year().isoformat()
     }
     vacantes.append(vacante)

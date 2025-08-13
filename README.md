@@ -55,12 +55,7 @@ This project is a GraphQL API designed for managing professionals, employers, jo
 │ ├── mdl_Titulo.js
 │ └── mdl_Vacante.js
 │
-├── 📁 routes
-│ └── titulos.js
-│
 ├── 📁 scripts
-│ ├── 📁 Img_Base64
-│ │ └── encode_titulo.py
 │ ├── 📁 Massive_data_upload
 │ │ ├── generate_empleadores.py
 │ │ ├── generate_expedientes.py
@@ -110,6 +105,7 @@ This project is a GraphQL API designed for managing professionals, employers, jo
 - pip install faker
 - pip install pymongo
 - npm i --save-dev nodemon
+- npm install multer
 
 ---
 
@@ -130,7 +126,11 @@ scripts/Massive_data_upload
 **Example:**
 
 ```bash
-python .\scripts\Massive_data_upload\[FileName].py
+python .\scripts\Massive_data_upload\generate_empleadores.py
+python .\scripts\Massive_data_upload\generate_expedientes.py
+python .\scripts\Massive_data_upload\generate_profesionales.py
+python .\scripts\Massive_data_upload\generate_titulos.py
+python .\scripts\Massive_data_upload\generate_vacantes.py
 ```
 
 This will generate JSON files inside:
@@ -170,38 +170,16 @@ npm start
 
 This will:
 - ▶️ Run Apollo Server Standalone on:
+- ▶️ Run Express Server (For inserting and viewing title images):
 
 ```
-http://localhost:4000/
+GraphQL ready at http://localhost:4000/
+Images at http://localhost:4001/api/titulos/:id/imagen
 ```
 
-- 🖼️ Launch a mini Express server for rendering Base64 images at:
+### 4. Check the “demo_queries.graphql” file.
 
-```
-http://localhost:4001/api/titulos/:id/imagen
-```
-
----
-
-### 4. Access an Image from GraphQL
-
-Example response from a query:
-
-```json
-"imagenUrl": "http://localhost:4001/api/titulos/6896c9b9a16c2ef2955d0b12/imagen"
-```
-
----
-
-### 5. Convert an Image to Base64
-
-Stop the server and run:
-
-```bash
-python .\scripts\Img_Base64\encode_titulo.py
-```
-
-Select the image from your PC and restart the server. Querying the expediente will now render the Base64 image.
+That file contains the complete flow of query execution for reviewing the functionality of the instructions.
 
 ---
 
