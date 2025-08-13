@@ -8,7 +8,7 @@ const Expediente = mongoose.model("Expediente");
 const Titulo = mongoose.model("Titulo");
 
 // URL base para servir imágenes
-const BASE_IMG = process.env.IMAGES_BASE_URL ?? "http://localhost:4001";
+const BASE_IMG = (process.env.IMAGES_BASE_URL ?? "http://localhost:4001").replace(/\/$/, "");
 const vacantesCollection = Vacante.collection.name; // evita hardcodear "Vacantes" o "vacantes"
 
 export const resolvers = {
@@ -120,15 +120,23 @@ export const resolvers = {
   },
 
   Mutation: {
-    // Crear Profesional
+    // Crear Profesional (evita cédula duplicada)
     agregarProfesional: async (_, args) => {
-      const nuevo = new Profesional(args);
+      const cedula = String(args.cedula).trim();
+      const yaExiste = await Profesional.exists({ cedula });
+      if (yaExiste) throw new Error("Ya existe un profesional con esa cédula.");
+
+      const nuevo = new Profesional({ ...args, cedula });
       return await nuevo.save();
     },
 
-    // Crear Empleador
+    // Crear Empleador (evita cédula duplicada)
     agregarEmpleador: async (_, args) => {
-      const nuevo = new Empleador(args);
+      const cedula = String(args.cedula).trim();
+      const yaExiste = await Empleador.exists({ cedula });
+      if (yaExiste) throw new Error("Ya existe un empleador con esa cédula.");
+
+      const nuevo = new Empleador({ ...args, cedula });
       return await nuevo.save();
     },
 
@@ -149,6 +157,10 @@ export const resolvers = {
 
     // Crear Expediente
     agregarExpediente: async (_, { profesionalCedula, titulos, experiencias }) => {
+
+      if (titulos.some(t => t.imagenBase64 && t.imagenBase64.length > 0)) {
+        throw new Error("La imagen debe subirse por POST /api/titulos/:id/imagen-base64");
+      }
 
       const profesional = await Profesional.findOne({ cedula: profesionalCedula });
       if (!profesional) throw new Error("Profesional no encontrado con esa cédula.");
@@ -236,7 +248,6 @@ export const resolvers = {
       return await Expediente.findOne({ profesional: parent._id });
     },
     postulaciones: async (parent) => {
-      // Popular cada vacante
       return await Promise.all(
         parent.postulaciones.map(async (p) => {
           const vacante = await Vacante.findById(p.vacanteId).populate("empresa");
@@ -250,6 +261,11 @@ export const resolvers = {
   },
 
   Titulo: {
-    imagenUrl: (parent) => `${BASE_IMG}/api/titulos/${parent._id}/imagen`
+    imagenUrl: (parent) => {
+      // 1) Si ya hay archivo subido, exponemos su URL directa
+      if (parent.imagenPath) return `${BASE_IMG}${parent.imagenPath}`;
+      // 2) Si no, caemos al endpoint que decodifica base64
+      return `${BASE_IMG}/api/titulos/${parent._id}/imagen`;
+    }
   }
 };

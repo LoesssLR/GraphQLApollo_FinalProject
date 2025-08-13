@@ -1,4 +1,3 @@
-// GraphQL schema definition for ProyectoFinal database
 export const typeDefs = `#graphql
 
 type Profesional {
@@ -43,10 +42,11 @@ type Expediente {
 }
 
 type Titulo {
-  _id: ID!                
+  _id: ID!
   nombre: String!
-  imagenBase64: String    
-  imagenUrl: String       
+  # No exponer base64 en el output
+  # imagenBase64: String
+  imagenUrl: String
 }
 
 type Experiencia {
@@ -100,9 +100,10 @@ type Mutation {
   postularVacante(profesionalId: ID!, vacanteId: ID!): Profesional
 }
 
+# input: imagenBase64 ya NO es obligatoria
 input TituloInput {
   nombre: String!
-  imagenBase64: String!
+  imagenBase64: String   # <-- antes era String!
 }
 
 input ExperienciaInput {
