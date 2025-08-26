@@ -27,7 +27,7 @@ const Titulo = mongoose.model("Titulo");
 
 // Función auxiliar para leer JSON
 const readJSON = async (filename) => {
-  const fullPath = path.join(__dirname, "..","..","JSON_MONGO_DATA", filename);
+  const fullPath = path.join(__dirname, "..", "..", "..", "DEMO_PROYECTOFINAL", "JSON_MONGO_DATA", filename);
   const data = await fs.readFile(fullPath, "utf-8");
   return JSON.parse(data);
 };
