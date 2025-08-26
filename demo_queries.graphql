@@ -220,15 +220,18 @@ query GetIds {
   vacs: vacantes { _id titulo }
 }
 
-{
-  "prof": "-",
-  "v4":  "-"
-}
 
+# Verify 4th vacancy 
 mutation Postular4ta($prof: ID!, $v4: ID!) {
   post4: postularVacante(profesionalId: $prof, vacanteId: $v4) {
     cedula nombre
   }
+}
+
+# Variables
+{
+  "prof": "-",
+  "v4":  "-"
 }
 
 # That should show an error.
